@@ -37,23 +37,23 @@ def series_published_sql():
 	""")
 	return cursor.fetchall()
 
-# Top 10 series for visitors
-def top_10_visits_sql():
-	cursor.execute("""
-	SELECT tv.* FROM
-	(
-		SELECT 
-		section,
-		series_url,
-		SUM(session_visit_number) AS visits,
-		RANK () OVER (PARTITION BY section ORDER BY visits DESC) AS rank
-		FROM series_visitors_by_session_visit_number
-		GROUP BY section, series_url
-	) tv
-	WHERE Rank <= 10
-	ORDER BY section, rank
-	""")
-	return cursor.fetchall()
+# # Top 10 series for visitors
+# def top_10_visits_sql():
+# 	cursor.execute("""
+# 	SELECT tv.* FROM
+# 	(
+# 		SELECT 
+# 		section,
+# 		series_url,
+# 		SUM(session_visit_number) AS visits,
+# 		RANK () OVER (PARTITION BY section ORDER BY visits DESC) AS rank
+# 		FROM series_visitors_by_session_visit_number
+# 		GROUP BY section, series_url
+# 	) tv
+# 	WHERE Rank <= 10
+# 	ORDER BY section, rank
+# 	""")
+# 	return cursor.fetchall()
 
 # Top 10 series for multi episode visit visitors
 def top_10_engagement_sql():
