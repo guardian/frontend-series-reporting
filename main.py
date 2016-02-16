@@ -39,15 +39,16 @@ def get_series(url):
 def run_cron():
 
 	print('running reports')
-	visits_data = top_10_visits_sql()
+
+	# visits_data = top_10_visits_sql()
 	publishing_data = series_published_sql()
 	engagement_data = top_10_engagement_sql()
 	loyalty_data = top_10_loyalty_sql()
 
 	# visits_sections = build_sections(visits_data, 'series_url', ['visits'])
-	# publishing_sections = build_sections(publishing_data, 'publication_date', ['series_published_to', 'episodes_published'])
-	# engagement_sections = build_sections(engagement_data, 'series_url', ['multi_episode_visit_visitors', 'single_episode_visit_visitors'])
-	# loyalty_sections = build_sections(loyalty_data, 'series_url', ['multi_session_visit_visitors', 'single_session_visit_visitors'])
+	publishing_sections = build_sections(publishing_data, 'publication_date', ['series_published_to', 'episodes_published'])
+	engagement_sections = build_sections(engagement_data, 'series_url', ['multi_episode_visit_visitors', 'single_episode_visit_visitors'])
+	loyalty_sections = build_sections(loyalty_data, 'series_url', ['multi_session_visit_visitors', 'single_session_visit_visitors'])
 
 	# x_n_data = x_n_sql()
 	# x_n_data_sorted = sorted(x_n_data, key=lambda x: x['n'])
@@ -55,13 +56,14 @@ def run_cron():
 	# x_n_sections = {}
 	# for section_name, section_data in groupby(x_n_data_sorted, 'section').iteritems():
 	# 	section_categories = range(1, max(entry['n'] for entry in section_data) + 1)
- 
+
 	# 	section_visitors = groupby(section_data, 'series_url', lambda x: x['visitors'])
 	# 	section_series = [{'name': url, 'data': visitors} for url, visitors in section_visitors.iteritems()]
 
 	# 	x_n_sections[section_name] = {'categories': section_categories, 'series': section_series}
 
-	processed_data = {'visits': visits_sections, 'publishing': publishing_sections, 'engagement': engagement_sections, 'loyalty': loyalty_sections, 'x_n': x_n_sections}
+	# processed_data = {'visits': visits_sections, 'publishing': publishing_sections, 'engagement': engagement_sections, 'loyalty': loyalty_sections, 'x_n': x_n_sections}
+	processed_data = {'publishing': publishing_sections, 'engagement': engagement_sections, 'loyalty': loyalty_sections, 'x_n': x_n_sections}
 
 	print json.dumps(processed_data, default=date_handler)
 
