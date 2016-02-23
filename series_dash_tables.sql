@@ -23,9 +23,9 @@ CREATE TEMPORARY TABLE series_visitors_30_day AS
 (
 	SELECT sc.episode_url, 
 	ophan_visitor_id,
-	pvf.ds_session_key,
---	MIN(pvf.page_view_timestamp::TIMESTAMP) AS page_view_timestamp, 
-	COUNT(*) AS visits
+--	pvf.ds_session_key,
+	pvf.page_view_timestamp::DATE as visit_date,
+	COUNT(*) AS pageviews
 	FROM series_content_30_day sc INNER JOIN content_dim cd 
 		ON sc.episode_url = cd.web_url INNER JOIN page_view_fact pvf 
 		ON cd.content_key = pvf.content_key
@@ -33,6 +33,22 @@ CREATE TEMPORARY TABLE series_visitors_30_day AS
 	AND pvf.page_view_timestamp::DATE >= (GETDATE()::DATE - 30)
 	GROUP BY 1,2,3
 );
+
+-- --last 30 days series visitors
+-- DROP TABLE IF EXISTS series_visitors_30_day;
+-- CREATE TEMPORARY TABLE series_visitors_30_day AS
+-- (
+-- 	SELECT sc.episode_url, 
+-- 	ophan_visitor_id,
+-- --	pvf.ds_session_key,
+-- 	COUNT(*) AS visits
+-- 	FROM series_content_30_day sc INNER JOIN content_dim cd 
+-- 		ON sc.episode_url = cd.web_url INNER JOIN page_view_fact pvf 
+-- 		ON cd.content_key = pvf.content_key
+-- 	WHERE pvf.page_view_timestamp::DATE <= GETDATE()::DATE
+-- 	AND pvf.page_view_timestamp::DATE >= (GETDATE()::DATE - 30)
+-- 	GROUP BY 1,2,3
+-- );
 
 --SERIES VISITORS BY NUMBER OF EPISODES VISITED
 DROP TABLE IF EXISTS series_visitors_by_episode_visit_number;
@@ -47,25 +63,48 @@ CREATE TEMPORARY TABLE series_visitors_by_episode_visit_number AS
 	GROUP BY series_url, section, ophan_visitor_id
 );
 
--- SERIES VISITORS BY NUMBER OF SESSIONS VISITED
-DROP TABLE IF EXISTS series_visitors_by_session_visit_number;
-CREATE TEMPORARY TABLE series_visitors_by_session_visit_number AS
+-- -- SERIES VISITORS BY NUMBER OF SESSIONS VISITED
+-- DROP TABLE IF EXISTS series_visitors_by_session_visit_number;
+-- CREATE TEMPORARY TABLE series_visitors_by_session_visit_number AS
+-- (
+-- 	SELECT series_url,
+-- 	section, 
+-- 	ophan_visitor_id,
+-- 	COUNT(ds_session_key) AS session_visit_number
+-- 	FROM 
+-- 	(
+-- 		SELECT series_url,
+-- 		section,
+-- 		ophan_visitor_id,
+-- 		ds_session_key,
+-- 		COUNT(*) AS episodes_in_session
+-- 		FROM series_content_30_day sc INNER JOIN series_visitors_30_day sv 
+-- 			ON sc.episode_url = sv.episode_url
+-- 			WHERE ds_session_key IS NOT NULL  --SEE WHERE NULLS COME FROM. ~1% OF RECORDS...
+-- 		GROUP BY ophan_visitor_id, series_url, section, ds_session_key
+-- 	)
+-- 	GROUP BY 1,2,3
+-- );
+
+-- SERIES VISITORS BY DAYS VISITED
+-- TO REPLACE SERIES VISITORS BY NUMBER OF SESSIONS VISITED
+DROP TABLE IF EXISTS series_visitors_by_days_visited;
+CREATE TEMPORARY TABLE series_visitors_by_days_visited AS
 (
-	SELECT series_url,
+	SELECT series_url, 
 	section, 
-	ophan_visitor_id,
-	COUNT(ds_session_key) AS session_visit_number
-	FROM 
+	ophan_visitor_id, 
+	COUNT(visit_date) AS days_visiting
+	FROM
 	(
-		SELECT series_url,
+		SELECT 
+		series_url,
 		section,
 		ophan_visitor_id,
-		ds_session_key,
-		COUNT(*) AS episodes_in_session
+		visit_date
 		FROM series_content_30_day sc INNER JOIN series_visitors_30_day sv 
-			ON sc.episode_url = sv.episode_url
-			WHERE ds_session_key IS NOT NULL  --SEE WHERE NULLS COME FROM. ~1% OF RECORDS...
-		GROUP BY ophan_visitor_id, series_url, section, ds_session_key
+			ON sc.episode_url = sv.episode_url 
+		GROUP BY 1,2,3,4
 	)
 	GROUP BY 1,2,3
 );	
