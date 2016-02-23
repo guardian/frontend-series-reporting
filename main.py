@@ -36,7 +36,9 @@ def get_series(url):
 	before_match, after_match = url.split('/series/')
 	return after_match
 
-def main():
+def run_cron():
+
+	print('running reports')
 
 	# visits_data = top_10_visits_sql()
 	publishing_data = series_published_sql()
@@ -48,17 +50,17 @@ def main():
 	engagement_sections = build_sections(engagement_data, 'series_url', ['multi_episode_visit_visitors', 'single_episode_visit_visitors'])
 	loyalty_sections = build_sections(loyalty_data, 'series_url', ['multi_session_visit_visitors', 'single_session_visit_visitors'])
 
-	x_n_data = x_n_sql()
-	x_n_data_sorted = sorted(x_n_data, key=lambda x: x['n'])
+	# x_n_data = x_n_sql()
+	# x_n_data_sorted = sorted(x_n_data, key=lambda x: x['n'])
 
-	x_n_sections = {}
-	for section_name, section_data in groupby(x_n_data_sorted, 'section').iteritems():
-		section_categories = range(1, max(entry['n'] for entry in section_data) + 1)
- 
-		section_visitors = groupby(section_data, 'series_url', lambda x: x['visitors'])
-		section_series = [{'name': url, 'data': visitors} for url, visitors in section_visitors.iteritems()]
+	# x_n_sections = {}
+	# for section_name, section_data in groupby(x_n_data_sorted, 'section').iteritems():
+	# 	section_categories = range(1, max(entry['n'] for entry in section_data) + 1)
 
-		x_n_sections[section_name] = {'categories': section_categories, 'series': section_series}
+	# 	section_visitors = groupby(section_data, 'series_url', lambda x: x['visitors'])
+	# 	section_series = [{'name': url, 'data': visitors} for url, visitors in section_visitors.iteritems()]
+
+	# 	x_n_sections[section_name] = {'categories': section_categories, 'series': section_series}
 
 	# processed_data = {'visits': visits_sections, 'publishing': publishing_sections, 'engagement': engagement_sections, 'loyalty': loyalty_sections, 'x_n': x_n_sections}
 	processed_data = {'publishing': publishing_sections, 'engagement': engagement_sections, 'loyalty': loyalty_sections, 'x_n': x_n_sections}

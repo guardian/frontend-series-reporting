@@ -2,15 +2,15 @@ import boto3
 import ConfigParser
 import io
 
-session=boto3.session.Session(region_name = 'eu-west-1')
+session = boto3.session.Session(region_name = 'eu-west-1')
 s3 = session.resource('s3')
 
 credentialsBucket = 'aws-frontend-artifacts'
-credentialsSection = 'redshift_connection_config'
 credentialsKeys = 'lambda/credentials/redshift_connection_config.py'
 
-bucket = s3.Bucket(credentialsBucket)
+credentialsSection = 'redshift_connection_config'
 
+bucket = s3.Bucket(credentialsBucket)
 
 def fileToCredentials(fileLike):
     parser = ConfigParser.ConfigParser()
