@@ -1,27 +1,30 @@
-import psycopg2
-import psycopg2.extras #extras library
 from string import Template
-import credentials
+#import credentials
 from pyhive import presto
 
-sql_file = open('series_dash_tables.sql', 'r').read()
-
 # conn_string = credentials.getRedshiftCredentials()
-# print 'Connecting to database\n	->%s' % (conn_string)
-# conn = psycopg2.connect(conn_string)
-# cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
-
-cursor = presto.connect("presto.ophan.co.uk",port=8889,schema="clean").cursor()
-
+print 'Connecting to database\n	->%s' % ('"presto.ophan.co.uk", port=8889, catalog="hive", schema="temp_ah"')
+conn = presto.connect("presto.ophan.co.uk", port=8889, catalog="hive", schema="temp_ah")
 print 'Connected'
 
-# # Execute sql to create tables
-cursor.execute(sql_file)
+def presto_query(conn, query):
+    cur = conn.cursor()
+    cur.execute(query)
+    cols = [column[0] for column in cur.description]
+    fetch = cur.fetchall()
+    results = []
+    for row in fetch:
+        results.append(dict(zip(cols, row)))
+    return results
+
+sql_file = open('series_dash_tables.sql', 'r').read()
+# Execute sql to create tables
+presto_query(conn, sql_file)
 
 # define functions to execute sql queries 
 # Series and episodes published last 30 days
 def series_published_sql():
-	cursor.execute("""
+	return presto_query(conn, """
 	SELECT publication_date,
 	       section,
 	       COUNT(series_url) AS series_published_to,
@@ -38,30 +41,11 @@ def series_published_sql():
 	         section
 	ORDER BY publication_date
 	""")
-	return cursor.fetchall()
-
-# # Top 10 series for visitors
-# def top_10_visits_sql():
-# 	cursor.execute("""
-# 	SELECT tv.* FROM
-# 	(
-# 		SELECT 
-# 		section,
-# 		series_url,
-# 		SUM(session_visit_number) AS visits,
-# 		RANK () OVER (PARTITION BY section ORDER BY visits DESC) AS rank
-# 		FROM series_visitors_by_session_visit_number
-# 		GROUP BY section, series_url
-# 	) tv
-# 	WHERE Rank <= 10
-# 	ORDER BY section, rank
-# 	""")
-# 	return cursor.fetchall()
 
 # Top 10 series for pageviews
 # To replace ""
 def top_10_pageviews_sql():
-	cursor.execute("""
+	return presto_query(conn, """
 	SELECT series_url,
 	       section,
 	       browser_id,
@@ -82,11 +66,10 @@ def top_10_pageviews_sql():
 	         2,
 	         3
 	""")
-	return cursor.fetchall()	
 
 # Top 10 series for multi episode visit visitors
 def top_10_engagement_sql():
-	cursor.execute("""
+	return presto_query(conn, """
 	SELECT te.* FROM 
 	(
 		SELECT section,
@@ -100,11 +83,10 @@ def top_10_engagement_sql():
 	WHERE Rank <= 10
 	ORDER BY section, rank
 	""")
-	return cursor.fetchall()
 
 # # Top 10 series for multi session visit visitors
 def top_10_loyalty_sql():
-	cursor.execute("""
+	return presto_query(conn, """
 	SELECT tl.* FROM 
 	(
 		SELECT section,
@@ -118,11 +100,10 @@ def top_10_loyalty_sql():
 	WHERE Rank <= 10
 	ORDER BY section, rank
 	""")
-	return cursor.fetchall()
 
 def x_n_sql():
 	# top 10 urls and episode counts
-	cursor.execute("""
+	return presto_query(conn, """
 	SELECT e.section,
 	       e.series_url,
 	       map_num,
@@ -137,7 +118,24 @@ def x_n_sql():
 	         2,
 	         3
 	         """)
-		return cursor.fetchall()
+
+# # Top 10 series for visitors
+# def top_10_visits_sql():
+# 	cursor.execute("""
+# 	SELECT tv.* FROM
+# 	(
+# 		SELECT 
+# 		section,
+# 		series_url,
+# 		SUM(session_visit_number) AS visits,
+# 		RANK () OVER (PARTITION BY section ORDER BY visits DESC) AS rank
+# 		FROM series_visitors_by_session_visit_number
+# 		GROUP BY section, series_url
+# 	) tv
+# 	WHERE Rank <= 10
+# 	ORDER BY section, rank
+# 	""")
+# 	return cursor.fetchall()
 
 # def x_n_sql():
 # 	# top 10 urls and episode counts
