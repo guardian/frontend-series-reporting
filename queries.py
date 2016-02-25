@@ -17,9 +17,13 @@ def presto_query(conn, query):
         results.append(dict(zip(cols, row)))
     return results
 
-sql_file = open('series_dash_tables.sql', 'r').read()
-# Execute sql to create tables
-presto_query(conn, sql_file)
+with open("series_dash_tables.sql", 'r') as myfile:
+	queries=myfile.read().split(';')
+
+# create base tables
+for query in queries:
+	print query
+	presto_query(conn, query)
 
 # define functions to execute sql queries 
 # Series and episodes published last 30 days
@@ -106,8 +110,8 @@ def x_n_sql():
 	return presto_query(conn, """
 	SELECT e.section,
 	       e.series_url,
-	       map_num,
-	       count(browser_id)
+	       map_num AS n,
+	       count(browser_id) AS visitors
 	FROM temp_ah.top_10_urls_and_episode_counts e
 	  JOIN temp_ah.number_wang nm ON e.episodes = nm.group_num
 	  JOIN temp_ah.series_visitors_by_episode_visit_number sv
