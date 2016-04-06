@@ -17,14 +17,6 @@ def presto_query(conn, query):
         results.append(dict(zip(cols, row)))
     return results
 
-with open("series_dash_tables.sql", 'r') as myfile:
-	queries=myfile.read().split(';')
-
-# create base tables
-for query in queries:
-	print query
-	presto_query(conn, query)
-
 # define functions to execute sql queries 
 # Series and episodes published last 30 days
 def series_published_sql():
@@ -88,7 +80,7 @@ def top_10_engagement_sql():
 	ORDER BY section, rank
 	""")
 
-# # Top 10 series for multi session visit visitors
+# # Top 10 series for multi day visit visitors
 def top_10_loyalty_sql():
 	return presto_query(conn, """
 	SELECT tl.* FROM 
@@ -107,12 +99,33 @@ def top_10_loyalty_sql():
 
 def x_n_sql():
 	# top 10 urls and episode counts
-	return presto_query(conn, """
+	return presto_query(conn, """ with top_10_urls_and_episode_counts as (SELECT se.section,
+	se.series_url, 
+	COUNT(episode_url) as episodes 
+	FROM series_content_30_day sc 
+	INNER JOIN
+	(
+	SELECT te.* FROM 
+	(
+		SELECT section,
+		series_url,
+		COUNT(CASE WHEN episode_visit_number>1 THEN 1 END) AS multi_episode_visit_visitors,
+		COUNT(CASE WHEN episode_visit_number=1 THEN 1 END) AS single_episode_visit_visitors,
+		Rank () OVER (PARTITION BY section ORDER BY COUNT(CASE WHEN episode_visit_number>1 THEN 1 END) DESC) AS rank
+		FROM temp_ah.series_visitors_by_episode_visit_number
+		GROUP BY section, series_url
+	) te
+	WHERE Rank <= 10
+	ORDER BY section, rank
+	) se
+	ON sc.series_url = se.series_url
+	GROUP BY se.section, se.series_url)
+
 	SELECT e.section,
 	       e.series_url,
-	       map_num AS n,
+	       map_num,
 	       count(browser_id) AS visitors
-	FROM temp_ah.top_10_urls_and_episode_counts e
+	FROM top_10_urls_and_episode_counts e
 	  JOIN temp_ah.number_wang nm ON e.episodes = nm.group_num
 	  JOIN temp_ah.series_visitors_by_episode_visit_number sv
 	    ON map_num = sv.episode_visit_number
