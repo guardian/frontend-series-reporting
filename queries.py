@@ -28,7 +28,7 @@ def series_published_sql():
 	FROM (SELECT publication_date,
 	             series_url,
 	             section,
-	             COUNT(episode_path) AS episodes_published_per_series
+	             COUNT(episode_url) AS episodes_published_per_series
 	      FROM temp_ah.series_content_30_day
 	      GROUP BY publication_date,
 	               series_url,
@@ -52,7 +52,7 @@ def top_10_pageviews_sql():
 	             COUNT(*) AS pageviews
 	      FROM temp_ah.series_content_30_day sc
 	        INNER JOIN temp_ah.series_visitors_30_day sv ON sc.episode_url = sv.episode_url
-	      WHERE ds_session_key IS NOT NULL
+	      --WHERE ds_session_key IS NOT NULL
 	      --SEE WHERE NULLS COME FROM. ~1% OF RECORDS...
 	      GROUP BY browser_id,
 	               series_url,
